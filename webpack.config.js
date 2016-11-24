@@ -78,7 +78,9 @@ config.plugins = [
     minimize: ENV_PRODUCTION,
     options: {
       postcss: [
-        autoprefixer({browsers: ['last 3 versions']})
+        autoprefixer({
+          browsers: ['last 3 versions']
+        })
       ],
       resolve: {},
       sassLoader: {
@@ -184,7 +186,7 @@ if (ENV_PRODUCTION) {
         warnings: false
       },
       mangle: {
-        screw_ie8: true  // eslint-disable-line camelcase
+        screw_ie8: true // eslint-disable-line camelcase
       }
     })
   );
