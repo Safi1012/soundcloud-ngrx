@@ -22,7 +22,7 @@ const ENV_PRODUCTION = NODE_ENV === 'production';
 const ENV_TEST = NODE_ENV === 'test';
 
 const HOST = '0.0.0.0';
-const PORT = 3000;
+const PORT = 4000;
 
 
 //=========================================================
