@@ -10,6 +10,7 @@ const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 const ProgressPlugin = require('webpack/lib/ProgressPlugin');
 const UglifyJsPlugin = require('webpack/lib/optimize/UglifyJsPlugin');
 const WebpackMd5Hash = require('webpack-md5-hash');
+const ServiceWorkerWebpackPlugin = require('serviceworker-webpack-plugin');
 
 
 //=========================================================
@@ -94,7 +95,10 @@ config.plugins = [
   new ContextReplacementPlugin(
     /angular(\\|\/)core(\\|\/)(esm(\\|\/)src|src)(\\|\/)linker/,
     path.resolve('src')
-  )
+  ),
+  new ServiceWorkerWebpackPlugin({
+    entry: path.join(__dirname, 'src/sw.js'),
+  })
 ];
 
 
