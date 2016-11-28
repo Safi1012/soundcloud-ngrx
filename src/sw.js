@@ -17,22 +17,28 @@ self.toolbox.router.get('/(.*)', function(request, values, options) {
   }
 });
 
+// json
+self.toolbox.router.get('/(.*)', function(request, values, options) {
+
+  // don't cache music files
+  if (!request.url.includes('stream')) {
+    return self.toolbox.fastest(request, values, options);
+  } else {
+    return self.toolbox.networkOnly(request, values, options);
+  }
+}, {
+  origin: /wis.sndcdn.com|api.soundcloud.com/,
+  cache: {
+    name: 'soundcloud-data-cache',
+    maxEntries: 200
+  }
+});
+
 // images
 self.toolbox.router.get('/(.*)', self.toolbox.fastest, {
   origin: /i1.sndcdn.com/,
   cache: {
     name: 'soundcloud-img-cache',
-    maxEntries: 200
-  }
-});
-
-// data -> forbid if data is mp3
-// content-type:audio/mpeg
-// only: content-type:application/json; charset=utf-8
-self.toolbox.router.get('/(.*)', self.toolbox.fastest, {
-  origin: /wis.sndcdn.com|api.soundcloud.com/,
-  cache: {
-    name: 'soundcloud-data-cache',
     maxEntries: 200
   }
 });
