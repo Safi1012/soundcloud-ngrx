@@ -15,10 +15,10 @@
     "target": "es5",
     "types": [
       "jasmine",
-      "node"
+      "node",
+      "service_worker_api"
     ]
   },
-
   "exclude": [
     "node_modules",
     "target",
