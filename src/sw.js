@@ -1,36 +1,38 @@
-require('node_modules/sw-toolbox/sw-toolbox.js');
-console.log('[ServiceWorker] File loaded');
+toolbox = require('node_modules/sw-toolbox/sw-toolbox.js');
 
-let cacheName = 'soundcloud-v1';
-let filesToCache = [
-  '/',
-  '/index.html'
-];
+// app shell
+self.toolbox.router.get('/(.*)', function(request, values, options) {
+  console.log(request.url);
 
-addEventListener('install', event => {
-  console.log('[ServiceWorker] Install');
-
-  event.waitUntil(
-    caches.open(cacheName).then(cache => {
-      console.log('[ServiceWorker] Caching app shell');
-      return cache.addAll(filesToCache);
-    })
-  );
+  // don't cache sockets'
+  if (!request.url.match(/(\/sockjs-node\/)/) && request.headers.get('accept')) {
+    return self.toolbox.cacheFirst(request, values, options);
+  } else {
+    return self.toolbox.networkOnly(request, values, options);
+  }
+}, {
+  cache: {
+    name: 'soundcloud-shell-cache',
+    maxEntries: 20
+  }
 });
 
-addEventListener('activate', event => {
-  console.log('[ServiceWorker] Activate');
+// images
+self.toolbox.router.get('/(.*)', self.toolbox.fastest, {
+  origin: /i1.sndcdn.com/,
+  cache: {
+    name: 'soundcloud-img-cache',
+    maxEntries: 200
+  }
+});
 
-  event.waitUntil(
-    caches.keys().then(function (keyList) {
-      return Promise.all(
-        keyList.map(function (key) {
-          if (key !== cacheName) {
-            console.log('[ServiceWorker] Removing old cache', key);
-            return caches.delete(key);
-          }
-        }));
-    })
-  );
-  return self.clients.claim();
+// data -> forbid if data is mp3
+// content-type:audio/mpeg
+// only: content-type:application/json; charset=utf-8
+self.toolbox.router.get('/(.*)', self.toolbox.fastest, {
+  origin: /wis.sndcdn.com|api.soundcloud.com/,
+  cache: {
+    name: 'soundcloud-data-cache',
+    maxEntries: 200
+  }
 });
