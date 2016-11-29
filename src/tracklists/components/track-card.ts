@@ -54,9 +54,9 @@ import { Track } from '../models/track';
           </div>
 
           <div class="cell">
-            <a [href]="track.userPermalinkUrl" target="_blank" rel="noopener noreferrer">
-              <icon name="launch" className="icon--small"></icon>
-            </a>
+            <icon-button
+              [icon]="isDownloaded ? 'toggle-on' : 'toggle-off'"
+              (onClick)="isDownloaded ? deleteMusic.emit() : downloadMusic.emit()"></icon-button>
           </div>
         </div>
       </div>
@@ -69,8 +69,11 @@ export class TrackCardComponent {
   @Input() isSelected = false;
   @Input() times: Observable<TimesState>;
   @Input() track: Track;
+  @Input() isDownloaded = false;
 
   @Output() pause = new EventEmitter(false);
   @Output() play = new EventEmitter(false);
   @Output() seek = new EventEmitter(false);
+  @Output() downloadMusic = new EventEmitter(false);
+  @Output() deleteMusic = new EventEmitter(false);
 }
