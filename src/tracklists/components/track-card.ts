@@ -54,9 +54,13 @@ import { Track } from '../models/track';
           </div>
 
           <div class="cell">
-            <icon-button
+            <icon-button class="track-card__toggle"
               [icon]="isDownloaded ? 'toggle-on' : 'toggle-off'"
               (onClick)="isDownloaded ? deleteMusic.emit() : downloadMusic.emit()"></icon-button>
+
+            <a [href]="track.userPermalinkUrl" target="_blank" rel="noopener noreferrer">
+              <icon name="launch" className="icon--small"></icon>
+            </a>
           </div>
         </div>
       </div>
