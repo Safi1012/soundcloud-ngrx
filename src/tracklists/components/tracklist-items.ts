@@ -26,7 +26,12 @@ import { Track } from '../models/track';
         [track]="track"
         (pause)="pause.emit()"
         (play)="track.id === player.trackId ? play.emit() : select.emit({trackId: track.id, tracklistId: tracklist.id})"
-        (seek)="seek.emit($event)"></track-card>
+        (seek)="seek.emit($event)"
+        [isServiceWorkerSupported]="isServiceWorkerSupported"
+        [isDownloaded]="isDownloaded"
+        (downloadMusic)="downloadMusic.emit()"
+        (deleteMusic)="deleteMusic.emit()"
+        ></track-card>
     </div>
 
     <loading-indicator *ngIf="tracklist.isPending || tracklist.hasNextPage"></loading-indicator>
@@ -39,11 +44,15 @@ export class TracklistItemsComponent {
   @Input() times: Observable<TimesState>;
   @Input() tracklist: Tracklist;
   @Input() tracks: Observable<List<Track>>;
+  @Input() isDownloaded: boolean;
+  @Input() isServiceWorkerSupported: boolean;
 
   @Output() pause = new EventEmitter(false);
   @Output() play = new EventEmitter(false);
   @Output() seek = new EventEmitter(false);
   @Output() select = new EventEmitter(false);
+  @Output() downloadMusic = new EventEmitter(false);
+  @Output() deleteMusic = new EventEmitter(false);
 
   get hasLineClamp(): boolean {
     return '-webkit-line-clamp' in document.body.style;

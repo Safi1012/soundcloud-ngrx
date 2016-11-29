@@ -54,7 +54,7 @@ import { Track } from '../models/track';
           </div>
 
           <div class="cell">
-            <icon-button class="track-card__toggle"
+            <icon-button *ngIf="isServiceWorkerSupported" class="track-card__toggle"
               [icon]="isDownloaded ? 'toggle-on' : 'toggle-off'"
               (onClick)="isDownloaded ? deleteMusic.emit() : downloadMusic.emit()"></icon-button>
 
@@ -74,6 +74,7 @@ export class TrackCardComponent {
   @Input() times: Observable<TimesState>;
   @Input() track: Track;
   @Input() isDownloaded = false;
+  @Input() isServiceWorkerSupported = false;
 
   @Output() pause = new EventEmitter(false);
   @Output() play = new EventEmitter(false);
