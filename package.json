@@ -40,6 +40,7 @@
     "compression": "~1.6.2",
     "express": "~4.14.0",
     "helmet": "~2.3.0",
+    "localforage": "^1.4.3",
     "serve-favicon": "~2.3.0",
     "sw-toolbox": "^3.4.0",
     "winston": "~2.2.0"
@@ -57,6 +58,7 @@
     "@ngrx/effects": "2.0.0",
     "@ngrx/store": "2.2.1",
     "@types/jasmine": "~2.5.35",
+    "@types/localforage": "0.0.32",
     "@types/node": "~6.0.45",
     "@types/service_worker_api": "0.0.5",
     "autoprefixer": "~6.5.1",

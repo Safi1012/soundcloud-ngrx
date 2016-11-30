@@ -16,7 +16,8 @@
     "types": [
       "jasmine",
       "node",
-      "service_worker_api"
+      "service_worker_api",
+      "localforage"
     ]
   },
   "exclude": [
