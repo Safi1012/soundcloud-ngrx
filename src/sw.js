@@ -1,4 +1,11 @@
 toolbox = require('node_modules/sw-toolbox/sw-toolbox.js');
+localForage = require('localforage');
+
+// indexDB database
+lfCachedURLs = localForage.createInstance({
+  name: 'soundcloud-url-cache'
+});
+
 
 // app shell
 self.toolbox.router.get('/(.*)', function(request, values, options) {
@@ -42,3 +49,55 @@ self.toolbox.router.get('/(.*)', self.toolbox.fastest, {
     maxEntries: 200
   }
 });
+
+// onOfflineSwitchToogle((song) => {
+//     self.toolbox.cache(song.url).then(() => { idb.addToCachedUrls(song.url); });
+// })
+
+
+self.addEventListener('message', function(event) {
+  debugger
+
+  console.log(event.data.command);
+  console.log(event.data.url);
+
+  switch (event.data.command) {
+    case 'saveMusic':
+      downloadMusic(event.data.url);
+      break;
+
+    case 'deleteMusic':
+      deleteMusic(event.data.url);
+      break;
+  }
+});
+
+function downloadMusic(url) {
+  self.toolbox.cache(url).then(() => {
+
+    // add URL to indexDB
+    lfCachedURLs.setItem(url, url).catch(err => {
+      console.log('Localforage - error saving url: ' + err);
+    });
+
+  }).catch(err => {
+    console.log(err);
+    // send message to client so it updates the UI
+
+  });
+}
+
+function deleteMusic(url) {
+  self.toolbox.uncache(url).then(() => {
+
+    // remove URL from indexDB
+    lfCachedURLs.removeItem(url).catch(err => {
+      console.log('Localforage - error deleting url: ' + err);
+    });
+
+  }).catch(err => {
+    console.log(err);
+    // call to client -> move toggle back to 'selected'
+
+  });
+}
