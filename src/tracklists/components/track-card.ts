@@ -1,11 +1,15 @@
+import { OnChanges, OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { TimesState } from 'src/player';
 import { Track } from '../models/track';
-
+import { MusicService } from 'src/music/music-service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [
+    MusicService
+  ],
   encapsulation: ViewEncapsulation.None,
   selector: 'track-card',
   styles: [
@@ -54,31 +58,34 @@ import { Track } from '../models/track';
           </div>
 
           <div class="cell">
-            <icon-button *ngIf="isServiceWorkerSupported" class="track-card__toggle"
-              [icon]="isDownloaded ? 'toggle-on' : 'toggle-off'"
-              (onClick)="isDownloaded ? deleteMusic.emit() : downloadMusic.emit()"></icon-button>
+            <icon-button *ngIf="music.isServiceWorkerSupported" class="track-card__toggle"
+              [icon]="music.isDownloaded ? 'toggle-on' : 'toggle-off'"
+              (onClick)="music.isDownloaded ? music.deleteTrack(track.id) : music.downloadTrack(track.id)"></icon-button>
 
             <a [href]="track.userPermalinkUrl" target="_blank" rel="noopener noreferrer">
               <icon name="launch" className="icon--small"></icon>
             </a>
           </div>
+          
         </div>
       </div>
     </article>
   `
 })
-export class TrackCardComponent {
+export class TrackCardComponent implements OnChanges {
   @Input() compact = false;
   @Input() isPlaying = false;
   @Input() isSelected = false;
   @Input() times: Observable<TimesState>;
   @Input() track: Track;
-  @Input() isDownloaded = false;
-  @Input() isServiceWorkerSupported = false;
 
   @Output() pause = new EventEmitter(false);
   @Output() play = new EventEmitter(false);
   @Output() seek = new EventEmitter(false);
-  @Output() downloadMusic = new EventEmitter(false);
-  @Output() deleteMusic = new EventEmitter(false);
+
+  music: MusicService;
+
+  ngOnChanges(): void {
+    this.music = new MusicService(this.track.id);
+  }
 }

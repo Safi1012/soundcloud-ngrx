@@ -11,45 +11,39 @@ export class MusicService {
     name: 'soundcloud-url-cache'
   });
 
-  constructor() {
+  constructor(trackId: number) {
     debugger;
 
     if ('serviceWorker' in navigator) {
       this.isServiceWorkerSupported = true;
-      // this.isMusicDownloaded(trackId);
+      this.isMusicDownloaded(trackId);
     }
   }
 
-  isMusicDownloaded(trackId: string): void {
+  isMusicDownloaded(trackId: number): void {
     debugger;
 
     let streamURL = API_TRACKS_URL + '/' + String(trackId) + '/stream?' + CLIENT_ID_PARAM;
     console.log(streamURL);
 
-
-
     this.lfCachedMusicURLs.getItem(streamURL).then(url => {
       if (url !== null) {
-        // resolve(true);
         this.isDownloaded = true;
       } else {
-        // resolve(false);
         this.isDownloaded = false;
       }
     }).catch(err => {
       console.log(err);
-      // resolve(false);
       this.isDownloaded = false;
     });
-
   }
 
-
-  downloadTrack(trackId: string): void {
+  downloadTrack(trackId: number): void {
     debugger;
 
     let streamURL = API_TRACKS_URL + '/' + String(trackId) + '/stream?' + CLIENT_ID_PARAM;
     console.log(streamURL);
+    this.isDownloaded = true;
 
     this.sendMessage({
       command: 'saveMusic',
@@ -57,7 +51,6 @@ export class MusicService {
 
     }).then(() => {
       console.log('successfully: sent to sw');
-      this.isDownloaded = true;
 
     }).catch(() => {
       console.log('failed: sent to sw');
@@ -66,8 +59,25 @@ export class MusicService {
     });
   }
 
-  deleteTrack(trackId: string): void {
-    console.log('pressed deleteTrack');
+  deleteTrack(trackId: number): void {
+    debugger;
+
+    let streamURL = API_TRACKS_URL + '/' + String(trackId) + '/stream?' + CLIENT_ID_PARAM;
+    console.log(streamURL);
+    this.isDownloaded = false;
+
+    this.sendMessage({
+      command: 'deleteMusic',
+      url: streamURL
+
+    }).then(() => {
+      console.log('successfully: delete sent to sw');
+
+    }).catch(() => {
+      console.log('failed: delete sent to sw');
+      this.isDownloaded = true;
+
+    });
   }
 
   sendMessage(message: any): Promise<{}> {
