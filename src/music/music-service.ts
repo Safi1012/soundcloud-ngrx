@@ -2,6 +2,11 @@ import * as localForage from 'localforage';
 import { Observable } from 'rxjs/Observable';
 import { API_TRACKS_URL, CLIENT_ID_PARAM } from 'src/constants';
 
+export enum CommandSW {
+  Download,
+  Delete
+}
+
 export class MusicService {
   isServiceWorkerSupported: boolean;
   isDownloaded: Observable<boolean>;
@@ -17,82 +22,95 @@ export class MusicService {
 
       this.isDownloaded = new Observable((observer) => {
         this.isDownloadedObserver = observer;
-        this.isMusicDownloaded(trackId);
+        this.initializeMusicState(trackId);
       });
     }
   }
 
-  isMusicDownloaded(trackId: number): void {
-    let streamURL = API_TRACKS_URL + '/' + String(trackId) + '/stream?' + CLIENT_ID_PARAM;
+  initializeMusicState(trackId: number): void {
+    this.checkIfUrlIsCached(trackId);
+  }
 
-    this.lfCachedMusicURLs.getItem(streamURL).then(url => {
-      if (url !== null) {
-        if (this.isDownloadedObserver) {
-          this.isDownloadedObserver.next(true);
-        }
+  toggleMusic(trackId: number): void {
+    this.checkIfUrlIsCached(trackId).then((data) => {
+      if (data) {
+        this.deleteTrack(trackId);
       } else {
-        if (this.isDownloadedObserver) {
-          this.isDownloadedObserver.next(false);
-        }
-      }
-    }).catch(err => {
-      console.log(err);
-      if (this.isDownloadedObserver) {
-        this.isDownloadedObserver.next(false);
+        this.downloadTrack(trackId);
       }
     });
   }
 
-  downloadTrack(trackId: number): void {
-    debugger;
-
+  checkIfUrlIsCached(trackId: number): Promise<boolean> {
     let streamURL = API_TRACKS_URL + '/' + String(trackId) + '/stream?' + CLIENT_ID_PARAM;
 
-    if (this.isDownloadedObserver) {
-      this.isDownloadedObserver.next(true);
-    }
-    this.sendMessage({
-      command: 'saveMusic',
-      url: streamURL
+    return new Promise((resolve) => {
 
-    }).then(() => {
-      console.log('successfully: sent to sw');
+      this.lfCachedMusicURLs.getItem(streamURL).then(url => {
 
-    }).catch(() => {
-      console.log('failed: sent to sw');
-      if (this.isDownloadedObserver) {
-        this.isDownloadedObserver.next(false);
+        if (url !== null) {
+          this.setIsDownloadedObserverToTrue();
+          resolve(true);
+        } else {
+          this.setIsDownloadedObserverToFalse();
+          resolve(false);
+        }
+
+      }).catch(err => {
+        console.log(err);
+        this.setIsDownloadedObserverToFalse();
+        resolve(false);
+
+      });
+    });
+  }
+
+  downloadTrack(trackId: number): void {
+    this.setIsDownloadedObserverToTrue();
+
+    this.buildMessage(trackId, CommandSW.Download).then((replyMessage: any) => {
+      if (replyMessage.message === 'failed') {
+        this.setIsDownloadedObserverToFalse();
       }
+
+    }).catch(err => {
+      this.setIsDownloadedObserverToFalse();
 
     });
   }
 
   deleteTrack(trackId: number): void {
-    debugger;
+    this.setIsDownloadedObserverToFalse();
 
-    let streamURL = API_TRACKS_URL + '/' + String(trackId) + '/stream?' + CLIENT_ID_PARAM;
-
-    if (this.isDownloadedObserver) {
-      this.isDownloadedObserver.next(false);
-    }
-    this.sendMessage({
-      command: 'deleteMusic',
-      url: streamURL
-
-    }).then(() => {
-      console.log('successfully: delete sent to sw');
-
-    }).catch(() => {
-      console.log('failed: delete sent to sw');
-      if (this.isDownloadedObserver) {
-        this.isDownloadedObserver.next(true);
+    this.buildMessage(trackId, CommandSW.Download).then((replyMessage: any) => {
+      if (replyMessage.message === 'failed') {
+        this.setIsDownloadedObserverToTrue();
       }
+
+    }).catch(err => {
+      this.setIsDownloadedObserverToTrue();
 
     });
   }
 
+  buildMessage(trackId: number, command: CommandSW): Promise<{}> {
+    let streamURL = API_TRACKS_URL + '/' + String(trackId) + '/stream?' + CLIENT_ID_PARAM;
+
+    let stringCommand = '';
+
+    if (command === CommandSW.Delete) {
+      stringCommand = 'deleteMusic';
+    } else {
+      stringCommand = 'downloadMusic';
+    }
+
+    return this.sendMessage({
+      command: stringCommand,
+      url: streamURL
+    });
+  }
+
   sendMessage(message: any): Promise<{}> {
-    debugger;
     // This wraps the message posting/response in a promise, which will resolve if the response doesn't
     // contain an error, and reject with the error if it does. If you'd prefer, it's possible to call
     // controller.postMessage() and set up the onmessage handler independently of a promise, but this is
@@ -115,4 +133,20 @@ export class MusicService {
         [messageChannel.port2]);
     });
   }
+
+  private setIsDownloadedObserverToFalse(): void {
+    if (this.isDownloadedObserver) {
+      this.isDownloadedObserver.next(false);
+    }
+  }
+
+  private setIsDownloadedObserverToTrue(): void {
+    if (this.isDownloadedObserver) {
+      this.isDownloadedObserver.next(true);
+    }
+  }
 }
+
+
+
+

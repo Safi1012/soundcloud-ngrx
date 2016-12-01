@@ -79,52 +79,51 @@ self.toolbox.router.get('/(.*)', function(request, values, options) {
 });
 
 self.addEventListener('message', function(event) {
-  debugger
-
-  console.log(event.data.command);
-  console.log(event.data.url);
-
   switch (event.data.command) {
     case 'saveMusic':
-      downloadMusic(event.data.url);
+      downloadMusic(event.data.url, event);
       break;
 
     case 'deleteMusic':
-      deleteMusic(event.data.url);
+      deleteMusic(event.data.url, event);
       break;
   }
 });
 
-function downloadMusic(url) {
+function downloadMusic(url, event) {
   debugger;
 
   self.toolbox.cache(url).then(() => {
-
-    // add URL to indexDB
     lfCachedMusicURLs.setItem(url, url).catch(err => {
       console.log('Localforage - error saving url: ' + err);
+      sendMessageToClient('failed')
     });
 
   }).catch(err => {
     console.log('sw: download error: ' + err);
-    // send message to client so it updates the UI
+    sendMessageToClient('failed')
 
   });
 }
 
-function deleteMusic(url) {
+function deleteMusic(url, event) {
   debugger;
 
   self.toolbox.uncache(url).then(() => {
-
-    // remove URL from indexDB
     lfCachedMusicURLs.removeItem(url).catch(err => {
       console.log('Localforage - error deleting url: ' + err);
+      sendMessageToClient('failed')
     });
 
   }).catch(err => {
     console.log('sw: delete error: ' + err);
-    // call to client -> move toggle back to 'selected'
+    sendMessageToClient('failed');
 
+  });
+}
+
+function sendMessageToClient(message) {
+  event.ports[0].postMessage({
+    'message': message
   });
 }

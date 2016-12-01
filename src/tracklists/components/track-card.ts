@@ -57,7 +57,7 @@ import { MusicService } from 'src/music/music-service';
           <div class="cell">
             <icon-button *ngIf="music.isServiceWorkerSupported" class="track-card__toggle"
               [icon]="(music.isDownloaded | async) ? 'toggle-on' : 'toggle-off'"
-              (onClick)="music.isDownloaded ? music.deleteTrack(track.id) : music.downloadTrack(track.id)"></icon-button>
+              (onClick)="music.toggleMusic(track.id)"></icon-button>
 
             <a [href]="track.userPermalinkUrl" target="_blank" rel="noopener noreferrer">
               <icon name="launch" className="icon--small"></icon>
