@@ -1,40 +1,45 @@
 import * as localForage from 'localforage';
-import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs/Observable';
 import { API_TRACKS_URL, CLIENT_ID_PARAM } from 'src/constants';
 
-@Injectable()
 export class MusicService {
   isServiceWorkerSupported: boolean;
-  isDownloaded = false;
+  isDownloaded: Observable<boolean>;
+  isDownloadedObserver: any;
 
   lfCachedMusicURLs = localForage.createInstance({
     name: 'soundcloud-url-cache'
   });
 
   constructor(trackId: number) {
-    debugger;
-
     if ('serviceWorker' in navigator) {
       this.isServiceWorkerSupported = true;
-      this.isMusicDownloaded(trackId);
+
+      this.isDownloaded = new Observable((observer) => {
+        this.isDownloadedObserver = observer;
+        this.isMusicDownloaded(trackId);
+      });
     }
   }
 
   isMusicDownloaded(trackId: number): void {
-    debugger;
-
     let streamURL = API_TRACKS_URL + '/' + String(trackId) + '/stream?' + CLIENT_ID_PARAM;
-    console.log(streamURL);
 
     this.lfCachedMusicURLs.getItem(streamURL).then(url => {
       if (url !== null) {
-        this.isDownloaded = true;
+        if (this.isDownloadedObserver) {
+          this.isDownloadedObserver.next(true);
+        }
       } else {
-        this.isDownloaded = false;
+        if (this.isDownloadedObserver) {
+          this.isDownloadedObserver.next(false);
+        }
       }
     }).catch(err => {
       console.log(err);
-      this.isDownloaded = false;
+      if (this.isDownloadedObserver) {
+        this.isDownloadedObserver.next(false);
+      }
     });
   }
 
@@ -42,9 +47,10 @@ export class MusicService {
     debugger;
 
     let streamURL = API_TRACKS_URL + '/' + String(trackId) + '/stream?' + CLIENT_ID_PARAM;
-    console.log(streamURL);
-    this.isDownloaded = true;
 
+    if (this.isDownloadedObserver) {
+      this.isDownloadedObserver.next(true);
+    }
     this.sendMessage({
       command: 'saveMusic',
       url: streamURL
@@ -54,7 +60,9 @@ export class MusicService {
 
     }).catch(() => {
       console.log('failed: sent to sw');
-      this.isDownloaded = false;
+      if (this.isDownloadedObserver) {
+        this.isDownloadedObserver.next(false);
+      }
 
     });
   }
@@ -63,9 +71,10 @@ export class MusicService {
     debugger;
 
     let streamURL = API_TRACKS_URL + '/' + String(trackId) + '/stream?' + CLIENT_ID_PARAM;
-    console.log(streamURL);
-    this.isDownloaded = false;
 
+    if (this.isDownloadedObserver) {
+      this.isDownloadedObserver.next(false);
+    }
     this.sendMessage({
       command: 'deleteMusic',
       url: streamURL
@@ -75,7 +84,9 @@ export class MusicService {
 
     }).catch(() => {
       console.log('failed: delete sent to sw');
-      this.isDownloaded = true;
+      if (this.isDownloadedObserver) {
+        this.isDownloadedObserver.next(true);
+      }
 
     });
   }

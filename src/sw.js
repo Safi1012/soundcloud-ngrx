@@ -2,7 +2,7 @@ toolbox = require('node_modules/sw-toolbox/sw-toolbox.js');
 localForage = require('localforage');
 
 // indexDB database
-lfCachedURLs = localForage.createInstance({
+lfCachedMusicURLs = localForage.createInstance({
   name: 'soundcloud-url-cache'
 });
 
@@ -50,10 +50,33 @@ self.toolbox.router.get('/(.*)', self.toolbox.fastest, {
   }
 });
 
-// onOfflineSwitchToogle((song) => {
-//     self.toolbox.cache(song.url).then(() => { idb.addToCachedUrls(song.url); });
-// })
+// music
+self.toolbox.router.get('/(.*)', function(request, values, options) {
+  debugger;
 
+  var requestedUrl = request.url.includes('stream');
+
+  if (requestedUrl.includes('stream')) {
+
+    lfCachedMusicURLs.getItem(requestedUrl).then(url => {
+      if (url !== null) {
+        return self.toolbox.cacheOnly(request, values, options);
+      } else {
+        return self.toolbox.networkOnly(request, values, options);
+      }
+    }).catch(err => {
+      console.log('sw music: ' + err);
+      return self.toolbox.networkOnly(request, values, options);
+
+    });
+
+  } else {
+    return self.toolbox.networkOnly(request, values, options);
+
+  }
+}, {
+  origin: /api.soundcloud.com/
+});
 
 self.addEventListener('message', function(event) {
   debugger
@@ -73,30 +96,34 @@ self.addEventListener('message', function(event) {
 });
 
 function downloadMusic(url) {
+  debugger;
+
   self.toolbox.cache(url).then(() => {
 
     // add URL to indexDB
-    lfCachedURLs.setItem(url, url).catch(err => {
+    lfCachedMusicURLs.setItem(url, url).catch(err => {
       console.log('Localforage - error saving url: ' + err);
     });
 
   }).catch(err => {
-    console.log(err);
+    console.log('sw: download error: ' + err);
     // send message to client so it updates the UI
 
   });
 }
 
 function deleteMusic(url) {
+  debugger;
+
   self.toolbox.uncache(url).then(() => {
 
     // remove URL from indexDB
-    lfCachedURLs.removeItem(url).catch(err => {
+    lfCachedMusicURLs.removeItem(url).catch(err => {
       console.log('Localforage - error deleting url: ' + err);
     });
 
   }).catch(err => {
-    console.log(err);
+    console.log('sw: delete error: ' + err);
     // call to client -> move toggle back to 'selected'
 
   });

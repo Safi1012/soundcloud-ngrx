@@ -1,4 +1,4 @@
-import { OnChanges, OnInit } from '@angular/core';
+import { OnChanges } from '@angular/core';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { TimesState } from 'src/player';
@@ -7,9 +7,6 @@ import { MusicService } from 'src/music/music-service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [
-    MusicService
-  ],
   encapsulation: ViewEncapsulation.None,
   selector: 'track-card',
   styles: [
@@ -59,7 +56,7 @@ import { MusicService } from 'src/music/music-service';
 
           <div class="cell">
             <icon-button *ngIf="music.isServiceWorkerSupported" class="track-card__toggle"
-              [icon]="music.isDownloaded ? 'toggle-on' : 'toggle-off'"
+              [icon]="(music.isDownloaded | async) ? 'toggle-on' : 'toggle-off'"
               (onClick)="music.isDownloaded ? music.deleteTrack(track.id) : music.downloadTrack(track.id)"></icon-button>
 
             <a [href]="track.userPermalinkUrl" target="_blank" rel="noopener noreferrer">
