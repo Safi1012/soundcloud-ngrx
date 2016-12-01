@@ -11,7 +11,6 @@ lfCachedMusicURLs = localForage.createInstance({
 self.toolbox.router.get('/(.*)', function(request, values, options) {
   console.log(request.url);
 
-  // don't cache sockets'
   if (!request.url.match(/(\/sockjs-node\/)/) && request.headers.get('accept')) {
     return self.toolbox.cacheFirst(request, values, options);
   } else {
@@ -24,14 +23,34 @@ self.toolbox.router.get('/(.*)', function(request, values, options) {
   }
 });
 
-// json
+// json + music
 self.toolbox.router.get('/(.*)', function(request, values, options) {
 
-  // don't cache music files
   if (!request.url.includes('stream')) {
+    // json  
     return self.toolbox.fastest(request, values, options);
+
   } else {
-    return self.toolbox.networkOnly(request, values, options);
+    // music
+    return lfCachedMusicURLs.getItem(request.url).then(url => {
+
+      if (url !== null) {
+        console.log('Music: cache');
+        return self.toolbox.cacheOnly(request, values, {
+          cache: {
+            name: 'soundcloud-music-cache'
+          }
+        });
+      } else {
+        console.log('Music: network');
+        return self.toolbox.networkOnly(request, values, options);
+      }
+
+    }).catch(err => {
+      console.log('sw music: ' + err);
+      return self.toolbox.networkOnly(request, values, options);
+
+    });
   }
 }, {
   origin: /wis.sndcdn.com|api.soundcloud.com/,
@@ -50,37 +69,11 @@ self.toolbox.router.get('/(.*)', self.toolbox.fastest, {
   }
 });
 
-// music
-self.toolbox.router.get('/(.*)', function(request, values, options) {
+self.addEventListener('message', function(event) {
   debugger;
 
-  var requestedUrl = request.url.includes('stream');
-
-  if (requestedUrl.includes('stream')) {
-
-    lfCachedMusicURLs.getItem(requestedUrl).then(url => {
-      if (url !== null) {
-        return self.toolbox.cacheOnly(request, values, options);
-      } else {
-        return self.toolbox.networkOnly(request, values, options);
-      }
-    }).catch(err => {
-      console.log('sw music: ' + err);
-      return self.toolbox.networkOnly(request, values, options);
-
-    });
-
-  } else {
-    return self.toolbox.networkOnly(request, values, options);
-
-  }
-}, {
-  origin: /api.soundcloud.com/
-});
-
-self.addEventListener('message', function(event) {
   switch (event.data.command) {
-    case 'saveMusic':
+    case 'downloadMusic':
       downloadMusic(event.data.url, event);
       break;
 
@@ -91,9 +84,12 @@ self.addEventListener('message', function(event) {
 });
 
 function downloadMusic(url, event) {
-  debugger;
+  self.toolbox.cache(url, {
+    cache: {
+      name: 'soundcloud-music-cache'
+    }
 
-  self.toolbox.cache(url).then(() => {
+  }).then(() => {
     lfCachedMusicURLs.setItem(url, url).catch(err => {
       console.log('Localforage - error saving url: ' + err);
       sendMessageToClient('failed')
@@ -107,9 +103,12 @@ function downloadMusic(url, event) {
 }
 
 function deleteMusic(url, event) {
-  debugger;
+  self.toolbox.uncache(url, {
+    cache: {
+      name: 'soundcloud-music-cache'
+    }
 
-  self.toolbox.uncache(url).then(() => {
+  }).then(() => {
     lfCachedMusicURLs.removeItem(url).catch(err => {
       console.log('Localforage - error deleting url: ' + err);
       sendMessageToClient('failed')

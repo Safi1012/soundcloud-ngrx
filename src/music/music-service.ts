@@ -74,6 +74,7 @@ export class MusicService {
       }
 
     }).catch(err => {
+      console.log(err + 'failed sending');
       this.setIsDownloadedObserverToFalse();
 
     });
@@ -82,12 +83,13 @@ export class MusicService {
   deleteTrack(trackId: number): void {
     this.setIsDownloadedObserverToFalse();
 
-    this.buildMessage(trackId, CommandSW.Download).then((replyMessage: any) => {
+    this.buildMessage(trackId, CommandSW.Delete).then((replyMessage: any) => {
       if (replyMessage.message === 'failed') {
         this.setIsDownloadedObserverToTrue();
       }
 
     }).catch(err => {
+      console.log(err + 'failed sending');
       this.setIsDownloadedObserverToTrue();
 
     });
@@ -146,7 +148,3 @@ export class MusicService {
     }
   }
 }
-
-
-
-
