@@ -70,6 +70,10 @@ config.module = {
 };
 
 config.plugins = [
+  new ServiceWorkerWebpackPlugin({
+    entry: path.join(__dirname, 'src/sw.js'),
+    publicPath: '/'
+  }),
   new DefinePlugin({
     'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
     'process.env.SOUNDCLOUD_CLIENT_ID': JSON.stringify(process.env.SOUNDCLOUD_CLIENT_ID)
@@ -96,9 +100,6 @@ config.plugins = [
     /angular(\\|\/)core(\\|\/)(esm(\\|\/)src|src)(\\|\/)linker/,
     path.resolve('src')
   ),
-  new ServiceWorkerWebpackPlugin({
-    entry: path.join(__dirname, 'src/sw.js'),
-  })
 ];
 
 
