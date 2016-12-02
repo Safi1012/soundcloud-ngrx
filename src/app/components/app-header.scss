@@ -63,16 +63,6 @@
     fill: #98999a;
   }
 
-  .btn--headphones {
-    width: 18px;
-    height: 18px;
-
-    .icon {
-      width: 18px;
-      height: 18px;
-    }
-  }
-
   .btn--search-alt {
     width: 18px;
     height: 18px;
@@ -99,6 +89,7 @@
     transform: translate(0, 0);
   }
 
+  .link--headphones,
   .link--github {
     margin-top: 2px;
     width: 20px;
