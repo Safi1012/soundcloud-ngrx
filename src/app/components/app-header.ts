@@ -15,6 +15,9 @@ import { Router } from '@angular/router';
           <h1 class="header__title"><a routerLink="/">SoundCloud • Angular2 NgRx</a></h1>
           <ul class="header__actions">
             <li>
+              <icon-button icon="headphones"></icon-button>
+            </li>
+            <li>
               <icon-button icon="search-alt" (onClick)="toggleOpen()"></icon-button>
             </li>
             <li>
