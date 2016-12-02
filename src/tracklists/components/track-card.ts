@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewEn
 import { Observable } from 'rxjs/Observable';
 import { TimesState } from 'src/player';
 import { Track } from '../models/track';
-import { MusicService } from 'src/music/music-service';
+import { MusicHandler } from 'src/music/music';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,9 +80,9 @@ export class TrackCardComponent implements OnChanges {
   @Output() play = new EventEmitter(false);
   @Output() seek = new EventEmitter(false);
 
-  music: MusicService;
+  music: MusicHandler;
 
   ngOnChanges(): void {
-    this.music = new MusicService(this.track.id);
+    this.music = new MusicHandler(this.track.id);
   }
 }

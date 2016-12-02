@@ -7,7 +7,7 @@ export enum CommandSW {
   Delete
 }
 
-export class MusicService {
+export class MusicHandler {
   isServiceWorkerSupported: boolean;
   isDownloaded: Observable<boolean>;
   isDownloadedObserver: any;
@@ -74,7 +74,7 @@ export class MusicService {
       }
 
     }).catch(err => {
-      console.log(err + 'failed sending');
+      console.log(err + ': failed sending to sw');
       this.setIsDownloadedObserverToFalse();
 
     });
@@ -89,7 +89,7 @@ export class MusicService {
       }
 
     }).catch(err => {
-      console.log(err + 'failed sending');
+      console.log(err + ': failed sending to sw');
       this.setIsDownloadedObserverToTrue();
 
     });
