@@ -83,6 +83,14 @@ self.addEventListener('message', function(event) {
   }
 });
 
+self.addEventListener('activate', function(event) {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener('install', function(event) {
+  event.waitUntil(self.skipWaiting());
+}); 
+
 function downloadMusic(url, event) {
   self.toolbox.cache(url, {
     cache: {
