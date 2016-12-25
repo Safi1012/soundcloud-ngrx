@@ -1,14 +1,14 @@
-toolbox = require('node_modules/sw-toolbox/sw-toolbox.js');
-localForage = require('localforage');
+const toolbox = require('node_modules/sw-toolbox/sw-toolbox.js');
+const localForage = require('localforage');
 
 // indexDB database
-lfCachedMusicURLs = localForage.createInstance({
+const lfCachedMusicURLs = localForage.createInstance({
   name: 'soundcloud-url-cache'
 });
 
 
 // app shell
-self.toolbox.router.get('/(.*)', function(request, values, options) {
+toolbox.router.get('/(.*)', function(request, values, options) {
   console.log(request.url);
 
   if (!request.url.match(/(\/sockjs-node\/)/) && request.headers.get('accept')) {
@@ -27,7 +27,7 @@ self.toolbox.router.get('/(.*)', function(request, values, options) {
 self.toolbox.router.get('/(.*)', function(request, values, options) {
 
   if (!request.url.includes('stream')) {
-    // json  
+    // json
     return self.toolbox.fastest(request, values, options);
 
   } else {
@@ -70,8 +70,6 @@ self.toolbox.router.get('/(.*)', self.toolbox.fastest, {
 });
 
 self.addEventListener('message', function(event) {
-  debugger;
-
   switch (event.data.command) {
     case 'downloadMusic':
       downloadMusic(event.data.url, event);
@@ -80,6 +78,9 @@ self.addEventListener('message', function(event) {
     case 'deleteMusic':
       deleteMusic(event.data.url, event);
       break;
+
+    default:
+      console.warn('message event: switch doesn\'t match');
   }
 });
 
@@ -89,7 +90,7 @@ self.addEventListener('activate', function(event) {
 
 self.addEventListener('install', function(event) {
   event.waitUntil(self.skipWaiting());
-}); 
+});
 
 function downloadMusic(url, event) {
   self.toolbox.cache(url, {
@@ -100,12 +101,12 @@ function downloadMusic(url, event) {
   }).then(() => {
     lfCachedMusicURLs.setItem(url, url).catch(err => {
       console.log('Localforage - error saving url: ' + err);
-      sendMessageToClient('failed')
+      sendMessageToClient('failed');
     });
 
   }).catch(err => {
     console.log('sw: download error: ' + err);
-    sendMessageToClient('failed')
+    sendMessageToClient('failed');
 
   });
 }
@@ -119,7 +120,7 @@ function deleteMusic(url, event) {
   }).then(() => {
     lfCachedMusicURLs.removeItem(url).catch(err => {
       console.log('Localforage - error deleting url: ' + err);
-      sendMessageToClient('failed')
+      sendMessageToClient('failed');
     });
 
   }).catch(err => {

@@ -21,7 +21,7 @@ rules:
   arrow-spacing: [2, {before: true, after: true}]
   block-scoped-var: 0
   block-spacing: 2
-  brace-style: [2, "stroustrup", {allowSingleLine: true}]
+  brace-style: [error, "1tbs", {allowSingleLine: true}]
   callback-return: 0
   camelcase: [2, {properties: "always"}]
   comma-dangle: 2
@@ -151,6 +151,7 @@ rules:
   no-warning-comments: 0
   no-whitespace-before-property: 2
   no-with: 2
+  no-console: 0
   object-curly-newline: 0
   object-curly-spacing: 0
   object-property-newline: 0
