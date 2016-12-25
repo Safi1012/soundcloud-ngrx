@@ -1,54 +1,98 @@
 const toolbox = require('node_modules/sw-toolbox/sw-toolbox.js');
 const localForage = require('localforage');
 
-// indexDB database
 const lfCachedMusicURLs = localForage.createInstance({
   name: 'soundcloud-url-cache'
 });
 
 
-// app shell
-toolbox.router.get('/(.*)', function(request, values, options) {
+//
+// ─── SETTINGS ───────────────────────────────────────────────────────────────────
+//
+
+toolbox.options.cache.name = 'soundcloud-shell-cache';
+toolbox.precache([
+  '/',
+  'index.html',
+  'main.js',
+  'polyfills.js',
+  'https://api.soundcloud.com/users/185676792/favorites?client_id=d02c42795f3bcac39f84eee0ae384b00&limit=60&linked_partitioning=1'
+]);
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches
+    .keys()
+    .then(keys => {
+      // remove old cache
+      keys.forEach(key => {
+        caches.delete(key);
+      });
+      // remove old indexDB entries
+      lfCachedMusicURLs.clear();
+    })
+    .then(
+      // claim client without waiting for reload
+      self.clients.claim()
+    )
+  );
+});
+
+self.addEventListener('install', event => {
+  // replace old sw without browser restart
+  event.waitUntil(self.skipWaiting());
+});
+
+
+//
+// ─── FETCH: APP-SHELL ─────────────────────────────────────────────────────────────
+//
+
+toolbox.router.get('/(.*)', (request, values, options) => {
   console.log(request.url);
 
-  if (!request.url.match(/(\/sockjs-node\/)/) && request.headers.get('accept')) {
-    return self.toolbox.cacheFirst(request, values, options);
+  if (!request.url.match(/(\/sockjs-node\/)/)) {
+    return toolbox.cacheFirst(request, values, options);
   } else {
-    return self.toolbox.networkOnly(request, values, options);
-  }
-}, {
-  cache: {
-    name: 'soundcloud-shell-cache',
-    maxEntries: 20
+    return toolbox.networkOnly(request, values, options);
   }
 });
 
-// json + music
-self.toolbox.router.get('/(.*)', function(request, values, options) {
+toolbox.router.get('/(.*)', (request, values, options) => {
+  return toolbox.fastest(request, values, options);
+}, {
+  origin: /api.soundcloud.com/
+});
+
+
+//
+// ─── FETCH: DATA ─────────────────────────────────────────────────────────────
+//
+
+toolbox.router.get('/(.*)', (request, values, options) => {
 
   if (!request.url.includes('stream')) {
     // json
-    return self.toolbox.fastest(request, values, options);
-
+    return toolbox.fastest(request, values, options);
   } else {
     // music
     return lfCachedMusicURLs.getItem(request.url).then(url => {
 
       if (url !== null) {
         console.log('Music: cache');
-        return self.toolbox.cacheOnly(request, values, {
+        return toolbox.cacheOnly(request, values, {
           cache: {
             name: 'soundcloud-music-cache'
           }
         });
       } else {
         console.log('Music: network');
-        return self.toolbox.networkOnly(request, values, options);
+        return toolbox.networkOnly(request, values, options);
       }
 
     }).catch(err => {
       console.log('sw music: ' + err);
-      return self.toolbox.networkOnly(request, values, options);
+      return toolbox.networkOnly(request, values, options);
 
     });
   }
@@ -60,8 +104,12 @@ self.toolbox.router.get('/(.*)', function(request, values, options) {
   }
 });
 
-// images
-self.toolbox.router.get('/(.*)', self.toolbox.fastest, {
+
+//
+// ─── FETCH: IMAGES ─────────────────────────────────────────────────────────────
+//
+
+toolbox.router.get('/(.*)', toolbox.fastest, {
   origin: /i1.sndcdn.com/,
   cache: {
     name: 'soundcloud-img-cache',
@@ -69,14 +117,19 @@ self.toolbox.router.get('/(.*)', self.toolbox.fastest, {
   }
 });
 
+
+//
+// ─── COMMUNICATION: SW <-> CLIENT ────────────────────────────────────────────────
+//
+
 self.addEventListener('message', function(event) {
   switch (event.data.command) {
     case 'downloadMusic':
-      downloadMusic(event.data.url, event);
+      downloadMusic(event.data.url);
       break;
 
     case 'deleteMusic':
-      deleteMusic(event.data.url, event);
+      deleteMusic(event.data.url);
       break;
 
     default:
@@ -84,54 +137,51 @@ self.addEventListener('message', function(event) {
   }
 });
 
-self.addEventListener('activate', function(event) {
-  event.waitUntil(self.clients.claim());
-});
+function sendMessageToClient(message) {
+  event.ports[0].postMessage({
+    'message': message
+  });
+}
 
-self.addEventListener('install', function(event) {
-  event.waitUntil(self.skipWaiting());
-});
 
-function downloadMusic(url, event) {
-  self.toolbox.cache(url, {
+//
+// ─── HANDLE SONG TRACKS ─────────────────────────────────────────────────────────
+//
+
+function downloadMusic(url) {
+  toolbox.cache(url, {
     cache: {
       name: 'soundcloud-music-cache'
     }
 
   }).then(() => {
     lfCachedMusicURLs.setItem(url, url).catch(err => {
-      console.log('Localforage - error saving url: ' + err);
+      console.error('Localforage - error saving url: ' + err);
       sendMessageToClient('failed');
     });
 
   }).catch(err => {
-    console.log('sw: download error: ' + err);
+    console.warn('sw: download error: ' + err);
     sendMessageToClient('failed');
 
   });
 }
 
-function deleteMusic(url, event) {
-  self.toolbox.uncache(url, {
+function deleteMusic(url) {
+  toolbox.uncache(url, {
     cache: {
       name: 'soundcloud-music-cache'
     }
 
   }).then(() => {
     lfCachedMusicURLs.removeItem(url).catch(err => {
-      console.log('Localforage - error deleting url: ' + err);
+      console.error('Localforage - error deleting url: ' + err);
       sendMessageToClient('failed');
     });
 
   }).catch(err => {
-    console.log('sw: delete error: ' + err);
+    console.warn('sw: delete error: ' + err);
     sendMessageToClient('failed');
 
-  });
-}
-
-function sendMessageToClient(message) {
-  event.ports[0].postMessage({
-    'message': message
   });
 }
