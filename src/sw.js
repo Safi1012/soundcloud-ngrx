@@ -35,6 +35,12 @@ self.addEventListener('activate', event => {
       // claim client without waiting for reload
       self.clients.claim()
     )
+    .then(
+      // add detection if it's the first version.
+      // If yes -> display: 'app is ready for offline use'
+      // Else -> display: 'a new version is available to use, please refresh
+      sendMessageToAllClients('activated')
+    )
   );
 });
 
@@ -58,18 +64,13 @@ toolbox.router.get('/(.*)', (request, values, options) => {
   }
 });
 
-toolbox.router.get('/(.*)', (request, values, options) => {
-  return toolbox.fastest(request, values, options);
-}, {
-  origin: /api.soundcloud.com/
-});
-
 
 //
 // ─── FETCH: DATA ─────────────────────────────────────────────────────────────
 //
 
 toolbox.router.get('/(.*)', (request, values, options) => {
+  // debugger;
 
   if (!request.url.includes('stream')) {
     // json
@@ -119,7 +120,7 @@ toolbox.router.get('/(.*)', toolbox.fastest, {
 
 
 //
-// ─── COMMUNICATION: SW <-> CLIENT ────────────────────────────────────────────────
+// ─── COMMUNICATION: CLIENT -> SW ────────────────────────────────────────────────
 //
 
 self.addEventListener('message', function(event) {
@@ -137,9 +138,37 @@ self.addEventListener('message', function(event) {
   }
 });
 
-function sendMessageToClient(message) {
+function replyToMessage(message) {
   event.ports[0].postMessage({
     'message': message
+  });
+}
+
+
+//
+// ─── COMMUNICATION: SW -> CLIENT ────────────────────────────────────────────────
+//
+
+function sendMessageToAllClients(msg) {
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      sendMessage(client, msg).then(m => console.log('SW Received Message: ' + m));
+    });
+  });
+}
+
+function sendMessage(client, msg) {
+  return new Promise(function(resolve, reject) {
+    let channel = new MessageChannel();
+
+    channel.port1.onmessage = function(event) {
+      if (event.data.error) {
+        reject(event.data.error);
+      } else {
+        resolve(event.data);
+      }
+    };
+    client.postMessage(msg, [channel.port2]);
   });
 }
 
@@ -157,12 +186,12 @@ function downloadMusic(url) {
   }).then(() => {
     lfCachedMusicURLs.setItem(url, url).catch(err => {
       console.error('Localforage - error saving url: ' + err);
-      sendMessageToClient('failed');
+      replyToMessage('failed');
     });
 
   }).catch(err => {
     console.warn('sw: download error: ' + err);
-    sendMessageToClient('failed');
+    replyToMessage('failed');
 
   });
 }
@@ -176,12 +205,12 @@ function deleteMusic(url) {
   }).then(() => {
     lfCachedMusicURLs.removeItem(url).catch(err => {
       console.error('Localforage - error deleting url: ' + err);
-      sendMessageToClient('failed');
+      replyToMessage('failed');
     });
 
   }).catch(err => {
     console.warn('sw: delete error: ' + err);
-    sendMessageToClient('failed');
+    replyToMessage('failed');
 
   });
 }
