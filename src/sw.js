@@ -62,37 +62,50 @@ toolbox.router.get('/(.*)', (request, values, options) => {
 //
 
 toolbox.router.get('/(.*)', (request, values, options) => {
-  if (!request.url.includes('stream')) {
-    // json
-    return toolbox.fastest(request, values, options);
-
+  if (request.url.includes('stream')) {
+    return handleMusicCache(request, values, options);
   } else {
-    // music
-    return self.caches.open('soundcloud-music-cache').then(cache => {
-      return cache.keys().then(keys => {
-        let obj = keys.find(key => key.url === request.url);
-
-        if (obj) {
-          return toolbox.cacheOnly(request, values, {
-            cache: {
-              name: 'soundcloud-music-cache'
-            }
-          });
-        } else {
-          console.log('[SW] Music: network');
-          return toolbox.networkOnly(request, values, options);
-        }
-      });
-    });
+    return handleDataCache(request, values, options);
   }
 }, {
-  origin: /wis.sndcdn.com|api.soundcloud.com/,
-  cache: {
-    name: 'soundcloud-data-cache',
-    maxEntries: 200
-  }
+  origin: /wis.sndcdn.com|api.soundcloud.com/
 });
 
+function handleDataCache(request, values, options) {
+  // special case -> get data from shell
+  if (request.url.includes('users/185676792')) {
+    return toolbox.fastest(request, values, {
+    cache: {
+      name: 'soundcloud-shell-cache',
+    }
+  });
+  }
+  return toolbox.fastest(request, values, {
+    cache: {
+      name: 'soundcloud-data-cache',
+      maxEntries: 200
+    }
+  });
+}
+
+function handleMusicCache(request, values, options) {
+  return self.caches.open('soundcloud-music-cache').then(cache => {
+    return cache.keys().then(keys => {
+      let obj = keys.find(key => key.url === request.url);
+
+      if (obj) {
+        return toolbox.cacheOnly(request, values, {
+          cache: {
+            name: 'soundcloud-music-cache'
+          }
+        });
+      } else {
+        console.log('[SW] Music: network');
+        return toolbox.networkOnly(request, values, options);
+      }
+    });
+  });
+}
 
 //
 // ─── FETCH: IMAGES ─────────────────────────────────────────────────────────────
@@ -105,6 +118,8 @@ toolbox.router.get('/(.*)', toolbox.fastest, {
     maxEntries: 200
   }
 });
+
+
 
 
 //
