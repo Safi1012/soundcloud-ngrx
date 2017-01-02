@@ -1,10 +1,4 @@
 const toolbox = require('node_modules/sw-toolbox/sw-toolbox.js');
-const localForage = require('localforage');
-
-const lfCachedMusicURLs = localForage.createInstance({
-  name: 'soundcloud-url-cache'
-});
-
 
 //
 // ─── SETTINGS ───────────────────────────────────────────────────────────────────
@@ -28,8 +22,6 @@ self.addEventListener('activate', event => {
       keys.forEach(key => {
         caches.delete(key);
       });
-      // remove old indexDB entries
-      lfCachedMusicURLs.clear();
     })
     .then(
       // claim client without waiting for reload
@@ -70,31 +62,27 @@ toolbox.router.get('/(.*)', (request, values, options) => {
 //
 
 toolbox.router.get('/(.*)', (request, values, options) => {
-  // debugger;
-
   if (!request.url.includes('stream')) {
     // json
     return toolbox.fastest(request, values, options);
+
   } else {
     // music
-    return lfCachedMusicURLs.getItem(request.url).then(url => {
+    return self.caches.open('soundcloud-music-cache').then(cache => {
+      return cache.keys().then(keys => {
+        let obj = keys.find(key => key.url === request.url);
 
-      if (url !== null) {
-        console.log('Music: cache');
-        return toolbox.cacheOnly(request, values, {
-          cache: {
-            name: 'soundcloud-music-cache'
-          }
-        });
-      } else {
-        console.log('Music: network');
-        return toolbox.networkOnly(request, values, options);
-      }
-
-    }).catch(err => {
-      console.log('sw music: ' + err);
-      return toolbox.networkOnly(request, values, options);
-
+        if (obj) {
+          return toolbox.cacheOnly(request, values, {
+            cache: {
+              name: 'soundcloud-music-cache'
+            }
+          });
+        } else {
+          console.log('[SW] Music: network');
+          return toolbox.networkOnly(request, values, options);
+        }
+      });
     });
   }
 }, {
@@ -183,12 +171,6 @@ function downloadMusic(url) {
       name: 'soundcloud-music-cache'
     }
 
-  }).then(() => {
-    lfCachedMusicURLs.setItem(url, url).catch(err => {
-      console.error('Localforage - error saving url: ' + err);
-      replyToMessage('failed');
-    });
-
   }).catch(err => {
     console.warn('sw: download error: ' + err);
     replyToMessage('failed');
@@ -201,12 +183,6 @@ function deleteMusic(url) {
     cache: {
       name: 'soundcloud-music-cache'
     }
-
-  }).then(() => {
-    lfCachedMusicURLs.removeItem(url).catch(err => {
-      console.error('Localforage - error deleting url: ' + err);
-      replyToMessage('failed');
-    });
 
   }).catch(err => {
     console.warn('sw: delete error: ' + err);

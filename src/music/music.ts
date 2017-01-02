@@ -1,4 +1,3 @@
-import * as localForage from 'localforage';
 import { Observable } from 'rxjs/Observable';
 import { API_TRACKS_URL, CLIENT_ID_PARAM } from 'src/constants';
 
@@ -11,10 +10,6 @@ export class MusicHandler {
   isServiceWorkerSupported: boolean;
   isDownloaded: Observable<boolean>;
   isDownloadedObserver: any;
-
-  lfCachedMusicURLs = localForage.createInstance({
-    name: 'soundcloud-url-cache'
-  });
 
   constructor(trackId: number) {
     if ('serviceWorker' in navigator) {
@@ -45,22 +40,19 @@ export class MusicHandler {
     let streamURL = API_TRACKS_URL + '/' + String(trackId) + '/stream?' + CLIENT_ID_PARAM;
 
     return new Promise((resolve) => {
+      self.caches.open('soundcloud-music-cache').then(cache => {
 
-      this.lfCachedMusicURLs.getItem(streamURL).then(url => {
+        cache.keys().then(keys => {
+          let obj = keys.find(key => key.url === streamURL);
 
-        if (url !== null) {
-          this.setIsDownloadedObserverToTrue();
-          resolve(true);
-        } else {
-          this.setIsDownloadedObserverToFalse();
-          resolve(false);
-        }
-
-      }).catch(err => {
-        console.log(err);
-        this.setIsDownloadedObserverToFalse();
-        resolve(false);
-
+          if (obj) {
+            this.setIsDownloadedObserverToTrue();
+            resolve(true);
+          } else {
+            this.setIsDownloadedObserverToFalse();
+            resolve(false);
+          }
+        });
       });
     });
   }
