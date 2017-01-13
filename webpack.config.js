@@ -123,7 +123,7 @@ if (ENV_DEVELOPMENT || ENV_PRODUCTION) {
 
   config.output = {
     path: path.resolve('./target'),
-    publicPath: '/'
+    publicPath: './'
   };
 
   config.plugins.push(
@@ -187,7 +187,7 @@ if (ENV_PRODUCTION) {
   config.module.rules.push({
     test: /\.scss$/,
     loader: ExtractTextPlugin.extract('css?-autoprefixer!postcss!sass'),
-    include: path.resolve('src/shared/styles')
+    include: path.resolve('./src/shared/styles')
   });
 
   config.plugins.push(
