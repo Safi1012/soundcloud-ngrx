@@ -11,6 +11,7 @@ const ProgressPlugin = require('webpack/lib/ProgressPlugin');
 const UglifyJsPlugin = require('webpack/lib/optimize/UglifyJsPlugin');
 const WebpackMd5Hash = require('webpack-md5-hash');
 const ServiceWorkerWebpackPlugin = require('serviceworker-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 
 //=========================================================
@@ -44,6 +45,14 @@ const rules = {
     test: /\.ts$/,
     loader: 'ts',
     exclude: /node_modules/
+  },
+  sw: {
+    test: /sw.js/,
+    exclude: /node_modules/,
+    loader: 'babel-loader',
+    query: {
+      presets: ['es2015']
+    }
   }
 };
 
@@ -141,6 +150,7 @@ if (ENV_DEVELOPMENT) {
 
   config.output.filename = '[name].js';
 
+
   config.module.rules.push(rules.sharedStyles);
 
   config.plugins.push(new ProgressPlugin());
@@ -171,8 +181,9 @@ if (ENV_DEVELOPMENT) {
 if (ENV_PRODUCTION) {
   config.devtool = 'hidden-source-map';
 
-  config.output.filename = '[name].[chunkhash].js';
+  config.output.filename = '[name].js';
 
+  config.module.rules.push(rules.sw);
   config.module.rules.push({
     test: /\.scss$/,
     loader: ExtractTextPlugin.extract('css?-autoprefixer!postcss!sass'),
@@ -181,7 +192,15 @@ if (ENV_PRODUCTION) {
 
   config.plugins.push(
     new WebpackMd5Hash(),
-    new ExtractTextPlugin('styles.[contenthash].css'),
+    new ExtractTextPlugin('styles.css'),
+    new CopyWebpackPlugin(
+      [{
+          from: './src/shared/favicon',
+          to: 'shared/favicon'
+        }, {
+          from: './src/manifest.json'
+        }
+      ]),
     new UglifyJsPlugin({
       comments: false,
       compress: {
