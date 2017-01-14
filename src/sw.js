@@ -6,10 +6,10 @@ const toolbox = require('node_modules/sw-toolbox/sw-toolbox.js');
 
 toolbox.options.cache.name = 'soundcloud-shell-cache';
 toolbox.precache([
-  '/',
-  'index.html',
-  'main.js',
-  'polyfills.js',
+  './',
+  './index.html',
+  './main.js',
+  './polyfills.js',
   'https://api.soundcloud.com/users/185676792/favorites?client_id=d02c42795f3bcac39f84eee0ae384b00&limit=60&linked_partitioning=1'
 ]);
 

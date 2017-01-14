@@ -49,7 +49,7 @@ export { AppState } from './interfaces';
     UsersModule
   ],
   providers: [
-    {provide: APP_BASE_HREF, useValue: '/'}
+    {provide: APP_BASE_HREF, useValue: location.pathname}
   ]
 })
 export class AppModule {}

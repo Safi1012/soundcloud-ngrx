@@ -79,10 +79,6 @@ config.module = {
 };
 
 config.plugins = [
-  new ServiceWorkerWebpackPlugin({
-    entry: path.join(__dirname, 'src/sw.js'),
-    publicPath: '/'
-  }),
   new DefinePlugin({
     'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
     'process.env.SOUNDCLOUD_CLIENT_ID': JSON.stringify(process.env.SOUNDCLOUD_CLIENT_ID)
@@ -155,6 +151,13 @@ if (ENV_DEVELOPMENT) {
 
   config.plugins.push(new ProgressPlugin());
 
+  config.plugins.push(
+    new ServiceWorkerWebpackPlugin({
+      entry: path.join(__dirname, 'src/sw.js'),
+      publicPath: '/'
+    })
+  );
+
   config.devServer = {
     contentBase: './src',
     historyApiFallback: true,
@@ -192,15 +195,18 @@ if (ENV_PRODUCTION) {
 
   config.plugins.push(
     new WebpackMd5Hash(),
+    new ServiceWorkerWebpackPlugin({
+      entry: path.join(__dirname, 'src/sw.js'),
+      publicPath: '/SoundCloudNgRx/'
+    }),
     new ExtractTextPlugin('styles.css'),
     new CopyWebpackPlugin(
       [{
-          from: './src/shared/favicon',
-          to: 'shared/favicon'
-        }, {
-          from: './src/manifest.json'
-        }
-      ]),
+        from: './src/shared/favicon',
+        to: 'shared/favicon'
+      }, {
+        from: './src/manifest.json'
+      }]),
     new UglifyJsPlugin({
       comments: false,
       compress: {
