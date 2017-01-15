@@ -15,18 +15,15 @@ import { Router } from '@angular/router';
           <h1 class="header__title"><a routerLink="/">SoundCloud • Angular2 NgRx</a></h1>
           <ul class="header__actions">
             <li>
-              <a class="link link--headphones" [routerLink]="['/saved']">
-                <icon name="headphones"></icon>
-              </a>
-            </li>
-            <li>
               <icon-button icon="search-alt" (onClick)="toggleOpen()"></icon-button>
             </li>
             <li>
-              <icon-button icon="soundcloud"></icon-button>
+              <a class="link" target="_blank" rel="noopener" href="https://soundcloud.com/">
+                <icon name="soundcloud"></icon>
+              </a>
             </li>
             <li>
-              <a class="link link--github" href="https://github.com/r-park/soundcloud-ngrx">
+              <a class="link link--github" target="_blank" rel="noopener" href="https://github.com/r-park/soundcloud-ngrx">
                 <icon name="github"></icon>
               </a>
             </li>

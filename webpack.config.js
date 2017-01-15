@@ -117,11 +117,6 @@ if (ENV_DEVELOPMENT || ENV_PRODUCTION) {
     polyfills: './src/polyfills.ts'
   };
 
-  config.output = {
-    path: path.resolve('./target'),
-    publicPath: '/'
-  };
-
   config.plugins.push(
     new CommonsChunkPlugin({
       name: ['polyfills'],
@@ -144,7 +139,11 @@ if (ENV_DEVELOPMENT || ENV_PRODUCTION) {
 if (ENV_DEVELOPMENT) {
   config.devtool = 'inline-source-map';
 
-  config.output.filename = '[name].js';
+  config.output = {
+    path: path.resolve('./target'),
+    publicPath: '/',
+    filename: '[name].js'
+  };
 
 
   config.module.rules.push(rules.sharedStyles);
@@ -184,13 +183,17 @@ if (ENV_DEVELOPMENT) {
 if (ENV_PRODUCTION) {
   config.devtool = 'hidden-source-map';
 
-  config.output.filename = '[name].js';
+  config.output = {
+    path: path.resolve('./target'),
+    publicPath: './',
+    filename: '[name].js'
+  };
 
   config.module.rules.push(rules.sw);
   config.module.rules.push({
     test: /\.scss$/,
     loader: ExtractTextPlugin.extract('css?-autoprefixer!postcss!sass'),
-    include: path.resolve('src/shared/styles')
+    include: path.resolve('./src/shared/styles')
   });
 
   config.plugins.push(
