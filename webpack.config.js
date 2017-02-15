@@ -12,6 +12,9 @@ const UglifyJsPlugin = require('webpack/lib/optimize/UglifyJsPlugin');
 const WebpackMd5Hash = require('webpack-md5-hash');
 const ServiceWorkerWebpackPlugin = require('serviceworker-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const PurifyCSSPlugin = require('purifycss-webpack');
+const CriticalPlugin = require('webpack-plugin-critical').CriticalPlugin;
+const StyleExtHtmlWebpackPlugin = require('style-ext-html-webpack-plugin');
 
 
 //=========================================================
@@ -203,6 +206,7 @@ if (ENV_PRODUCTION) {
       publicPath: '/SoundCloudNgRx/'
     }),
     new ExtractTextPlugin('styles.css'),
+    new StyleExtHtmlWebpackPlugin(),
     new CopyWebpackPlugin(
       [{
         from: './src/shared/favicon',
